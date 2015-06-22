@@ -7,6 +7,7 @@ import json, re
 import urllib.request
 from datetime import datetime
 import argparse
+import socket
 
 #Parse the command line arguments (all required or else exception will be thrown)
 parser = argparse.ArgumentParser()
@@ -20,21 +21,17 @@ TOKEN = args.token
 DOMAIN = args.domain
 RECORD = args.record
 
-CHECKIP = "http://checkip.dyndns.org:8245/"
 APIURL = "https://api.digitalocean.com/v2"
 AUTH_HEADER = {'Authorization': "Bearer %s" % (TOKEN)}
 
-def get_external_ip():
-    """ Return the current external IP. """
-    print ("Fetching external IP from:", CHECKIP)
+def get_local_ip():
+    """ Return the current local IP. """
+    print ("Fetching local IP")
 
-    fp = urllib.request.urlopen(CHECKIP)
-    mybytes = fp.read()
-    html = mybytes.decode("utf8")
-
-    external_ip = re.findall('[0-9.]+', html)[0]
-    print ("Found external IP: ", external_ip)
-    return external_ip
+    """ Get the IP that internet connections go through """
+    local_ip = [(s.connect(('8.8.8.8', 80)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]
+    print ("Found local IP: ", local_ip)
+    return local_ip
 
 def get_domain(name=DOMAIN):
     print ("Fetching Domain ID for:", name)
@@ -88,7 +85,7 @@ def set_record_ip(domain, record, ipaddr):
 if __name__ == '__main__':
     try:
         print ("Updating ", RECORD, ".", DOMAIN, ":", datetime.now())
-        ipaddr = get_external_ip()
+        ipaddr = get_local_ip()
         domain = get_domain()
         record = get_record(domain)
         if record['data'] == ipaddr:

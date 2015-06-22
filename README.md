@@ -1,6 +1,8 @@
 Digital Ocean Dynamic DNS-Updater
 =================================
 
+THIS IS A FORK THAT RETURNS THE LOCAL IP INSTEAD.
+
 Purpose:
 --------
 Allows the dynamic updating of an 'A' record that is managed by Digital Oceans DNS server.
