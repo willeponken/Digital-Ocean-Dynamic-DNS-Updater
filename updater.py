@@ -52,17 +52,24 @@ def get_domain(name=DOMAIN):
 def get_record(domain, name=RECORD):
     print ("Fetching Record ID for: ", name)
     url = "%s/domains/%s/records" % (APIURL, domain['name'])
+    
+    def fetch_id(url):
+        req = urllib.request.Request(url, headers=AUTH_HEADER)
+        fp = urllib.request.urlopen(req)
+        mybytes = fp.read()
+        html = mybytes.decode("utf8")
+        result = json.loads(html)
+        
+        for record in result['domain_records']:
+            if record['type'] == 'A' and record['name'] == name:
+                return record
+ 
+        if result['links']['pages']['next']:
+            return fetch_id(result['links']['pages']['next'])
 
-    req = urllib.request.Request(url, headers=AUTH_HEADER)
-    fp = urllib.request.urlopen(req)
-    mybytes = fp.read()
-    html = mybytes.decode("utf8")
-    result = json.loads(html)
+        raise Exception("Could not find record: %s" % name)
 
-    for record in result['domain_records']:
-        if record['type'] == 'A' and record['name'] == name:
-            return record
-    raise Exception("Could not find record: %s" % name)
+    return fetch_id(url)
 
 def set_record_ip(domain, record, ipaddr):
     print ("Updating record", record['name'], ".", domain['name'], "to", ipaddr)
